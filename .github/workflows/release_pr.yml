@@ -6,7 +6,7 @@ on:
       token:
         required: true
       slack_webhook:
-        required: true        
+        required: true
 
 jobs:
   job:
@@ -20,12 +20,12 @@ jobs:
       - name: Check release branch existence
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.override != 'true' }}
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ secrets.token }}
         run: |
           ! (git branch -a | grep -c 'remotes/origin/release')
       - name: Create new Branch
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ secrets.token }}
         run: |
           git switch -c release
           git push origin release
@@ -37,7 +37,7 @@ jobs:
 
       - name: Create a release pull request
         env:
-          GIT_PR_RELEASE_TOKEN: ${{ github.token }}
+          GIT_PR_RELEASE_TOKEN: ${{ secrets.token }}
           GIT_PR_RELEASE_BRANCH_PRODUCTION: master
           GIT_PR_RELEASE_BRANCH_STAGING: release
           GIT_PR_RELEASE_TEMPLATE: .git-pr-release-template
@@ -47,7 +47,7 @@ jobs:
       - name: Fetch created pull request info
         id: fetch
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.token }}
           GIT_PR_RELEASE_BRANCH_STAGING: release
         run: |
           gh pr view $GIT_PR_RELEASE_BRANCH_STAGING --json "body,number" -t '{{ .number }}{{ printf "\n" }}{{ .body }}' > pr.txt
