@@ -76,7 +76,7 @@ jobs:
           echo ::set-output name=number::$number
 
       - name: Notify of Slack
-        uses: rtCamp/action-slack-notify@master
+        uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.slack_webhook }}
           SLACK_COLOR: '#1DD0B0'
