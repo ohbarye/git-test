@@ -17,7 +17,12 @@ on:
         type: string
         description: 'The template file path (relative to the workidir top) for pull requests created. Its first line is used for the PR title, the rest for the body. This is an ERB template.'
         default: '.git-pr-release-template'
-        required: false        
+        required: false
+      override:
+        type: boolean
+        description: 'If this value is true, this action overrides an existing branch and a pull request.'
+        default: false
+        required: false
     secrets:
       token:
         required: true
@@ -41,7 +46,7 @@ jobs:
           ref: ${{ github.event.inputs.branch_name }} # checkout branch
 
       - name: Check if release branch exists
-        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.override != 'true' }}
+        if: ${{ inputs.override }}
         run: |
           ! (git branch -a | grep -c "remotes/origin/$GIT_PR_RELEASE_BRANCH_STAGING")
       
