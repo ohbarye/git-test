@@ -1,0 +1,67 @@
+name: release-pr
+
+on:
+  workflow_call:
+    secrets:
+      token:
+        required: true
+      slack_webhook:
+        required: true        
+
+jobs:
+  job:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0 # Need to fetch merge history
+          ref: ${{ github.event.inputs.branch_name }} # checkout branch
+
+      - name: Check release branch existence
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.override != 'true' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ! (git branch -a | grep -c 'remotes/origin/release')
+      - name: Create new Branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git switch -c release
+          git push origin release
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.0.3
+          bundler-cache: true
+
+      - name: Create a release pull request
+        env:
+          GIT_PR_RELEASE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_PR_RELEASE_BRANCH_PRODUCTION: master
+          GIT_PR_RELEASE_BRANCH_STAGING: release
+          GIT_PR_RELEASE_TEMPLATE: .git-pr-release-template
+        run: |
+          gem install -N git-pr-release
+          git-pr-release
+      - name: Fetch created pull request info
+        id: fetch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_PR_RELEASE_BRANCH_STAGING: release
+        run: |
+          gh pr view $GIT_PR_RELEASE_BRANCH_STAGING --json "body,number" -t '{{ .number }}{{ printf "\n" }}{{ .body }}' > pr.txt
+          users=$(grep -o -E '@[A-z]+' pr.txt | uniq | xargs echo)
+          number=$(head -n 1 pr.txt)
+          echo ::set-output name=users::$users
+          echo ::set-output name=number::$number
+      - name: Notify
+        uses: rtCamp/action-slack-notify@master
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_COLOR: '#1DD0B0'
+          SLACK_TITLE: '${{ github.repository }} has changes to be released!'
+          SLACK_MESSAGE: 'Check https://github.com/${{ github.repository }}/pulls/${{ steps.fetch.outputs.number }} ${{ steps.fetch.outputs.users }} '
+          SLACK_FOOTER: ''
+          SLACK_LINK_NAMES: true
+          MSG_MINIMAL: true
