@@ -10,7 +10,9 @@ on:
 
 jobs:
   job:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.token }}
     steps:
       - uses: actions/checkout@v2
         with:
@@ -19,13 +21,9 @@ jobs:
 
       - name: Check release branch existence
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.override != 'true' }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.token }}
         run: |
           ! (git branch -a | grep -c 'remotes/origin/release')
       - name: Create new Branch
-        env:
-          GITHUB_TOKEN: ${{ secrets.token }}
         run: |
           git switch -c release
           git push origin release
@@ -47,7 +45,6 @@ jobs:
       - name: Fetch created pull request info
         id: fetch
         env:
-          GH_TOKEN: ${{ secrets.token }}
           GIT_PR_RELEASE_BRANCH_STAGING: release
         run: |
           gh pr view $GIT_PR_RELEASE_BRANCH_STAGING --json "body,number" -t '{{ .number }}{{ printf "\n" }}{{ .body }}' > pr.txt
