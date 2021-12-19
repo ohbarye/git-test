@@ -23,6 +23,11 @@ on:
         description: 'If this value is true, this action overrides an existing branch and a pull request.'
         default: false
         required: false
+      slack_channel:
+        type: string
+        description: 'Specify Slack channel in which message needs to be sent. Default is set during Slack webhook creation.'
+        default: ''
+        required: false
     secrets:
       token:
         required: true
@@ -79,6 +84,7 @@ jobs:
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.slack_webhook }}
+          SLACK_CHANNEL: ${{ inputs.slack_channel }}
           SLACK_COLOR: '#1DD0B0'
           SLACK_TITLE: '${{ github.repository }} has changes to be released!'
           SLACK_MESSAGE: 'Check https://github.com/${{ github.repository }}/pulls/${{ steps.fetch.outputs.number }} ${{ steps.fetch.outputs.users }} '
