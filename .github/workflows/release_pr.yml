@@ -27,7 +27,7 @@ on:
       token:
         required: true
       slack_webhook:
-        required: false
+        required: true
 
 jobs:
   job:
