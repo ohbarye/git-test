@@ -27,7 +27,7 @@ on:
       token:
         required: true
       slack_webhook:
-        required: true
+        required: false
 
 jobs:
   job:
@@ -77,6 +77,7 @@ jobs:
 
       - name: Notify of Slack
         uses: rtCamp/action-slack-notify@v2
+        if: ${{ secrets.slack_webhook }}
         env:
           SLACK_WEBHOOK: ${{ secrets.slack_webhook }}
           SLACK_COLOR: '#1DD0B0'
