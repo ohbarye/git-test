@@ -46,15 +46,13 @@ jobs:
           ref: ${{ github.event.inputs.branch_name }} # checkout branch
 
       - name: Check if release branch exists
-        if: ${{ inputs.override }}
+        if: !${{ inputs.override }}
         run: |
           ! (git branch -a | grep -c "remotes/origin/$GIT_PR_RELEASE_BRANCH_STAGING")
-      
       - name: Create new Branch
         run: |
           git switch -c $GIT_PR_RELEASE_BRANCH_STAGING
           git push origin $GIT_PR_RELEASE_BRANCH_STAGING
-
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
@@ -65,24 +63,21 @@ jobs:
         run: |
           gem install -N git-pr-release
           git-pr-release
-
       - name: Fetch created pull request info
         id: fetch
         run: |
           gh pr view $GIT_PR_RELEASE_BRANCH_STAGING --json "body,number" -t '{{ .number }}{{ printf "\n" }}{{ .body }}' > pr.txt
-          users=$(grep -o -E '@[A-z]+' pr.txt | uniq | xargs echo)
+          users=$(grep -o -E '@[A-z]+' pr.txt | sort -u | xargs echo)
           number=$(head -n 1 pr.txt)
           echo ::set-output name=users::$users
           echo ::set-output name=number::$number
-
       - name: Notify of Slack
         uses: rtCamp/action-slack-notify@v2
-        if: ${{ secrets.slack_webhook }}
         env:
           SLACK_WEBHOOK: ${{ secrets.slack_webhook }}
           SLACK_COLOR: '#1DD0B0'
           SLACK_TITLE: '${{ github.repository }} has changes to be released!'
-          SLACK_MESSAGE: 'Check https://github.com/${{ github.repository }}/pulls/${{ steps.fetch.outputs.number }} ${{ steps.fetch.outputs.users }} '
+          SLACK_MESSAGE: 'Check https://github.com/${{ github.repository }}/pull/${{ steps.fetch.outputs.number }} ${{ steps.fetch.outputs.users }} '
           SLACK_FOOTER: ''
           SLACK_LINK_NAMES: true
           MSG_MINIMAL: true
