@@ -46,7 +46,7 @@ jobs:
           ref: ${{ github.event.inputs.branch_name }} # checkout branch
 
       - name: Check if release branch exists
-        if: !${{ inputs.override }}
+        if: ${{ !inputs.override }}
         run: |
           ! (git branch -a | grep -c "remotes/origin/$GIT_PR_RELEASE_BRANCH_STAGING")
       - name: Create new Branch
